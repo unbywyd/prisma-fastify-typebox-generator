@@ -1,9 +1,9 @@
 {
-  "name": "prisma-typebox-generator",
+  "name": "prisma-fastify-typebox-generator",
   "version": "1.0.0",
   "description": "Generate TypeBox schemas from your Prisma schema. Create type-safe, runtime-validated schemas for your Fastify or other TypeScript applications.",
   "bin": {
-    "prisma-typebox-generator": "lib/bin.js"
+    "prisma-fastify-typebox-generator": "lib/bin.js"
   },
   "type": "module",
   "main": "lib/index.js",
