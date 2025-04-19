@@ -1,0 +1,60 @@
+{
+  "name": "prisma-typebox-generator",
+  "version": "1.0.0",
+  "description": "Generate TypeBox schemas from your Prisma schema. Create type-safe, runtime-validated schemas for your Fastify or other TypeScript applications.",
+  "bin": {
+    "prisma-typebox-generator": "lib/bin.js"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "author": {
+    "name": "Artyom Gorlovetskiy",
+    "url": "https://github.com/unbywyd",
+    "email": "unbywyd@gmail.com"
+  },
+  "engines": {
+    "node": ">=18.19.0"
+  },
+  "files": [
+    "lib/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "prisma",
+    "generator",
+    "typebox",
+    "typescript",
+    "openapi",
+    "fastify"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/generator-helper": "^6.2.1",
+    "@prisma/internals": "^6.2.1",
+    "@sinclair/typebox": "^0.32.0",
+    "fsesm": "^0.2.2",
+    "ts-morph": "^22.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.10",
+    "tslib": "^2.6.2",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "@prisma/client": "^6.6.0",
+    "prisma": "^6.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unbywyd/prisma-typebox-generator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/unbywyd/prisma-typebox-generator/issues"
+  },
+  "homepage": "https://github.com/unbywyd/prisma-typebox-generator",
+  "private": false
+}
