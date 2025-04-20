@@ -1,13 +1,13 @@
 # Prisma TypeBox Generator
 
-[![NPM Version](https://img.shields.io/npm/v/prisma-typebox-generator.svg?style=for-the-badge)](https://www.npmjs.com/package/prisma-typebox-generator)
-[![GitHub Stars](https://img.shields.io/github/stars/unbywyd/prisma-typebox-generator.svg?style=for-the-badge&logo=github)](https://github.com/unbywyd/prisma-typebox-generator)
+[![NPM Version](https://img.shields.io/npm/v/prisma-fastify-typebox-generator.svg?style=for-the-badge)](https://www.npmjs.com/package/prisma-fastify-typebox-generator)
+[![GitHub Stars](https://img.shields.io/github/stars/unbywyd/prisma-fastify-typebox-generator.svg?style=for-the-badge&logo=github)](https://github.com/unbywyd/prisma-fastify-typebox-generator)
 
 ## ⚡ Prisma Schema Generator – CLI & Programmatic Usage
 
 This package is part of the Prisma schema generation ecosystem, offering two specialized generators:
 
-1. **Prisma TypeBox Generator** (this package) - Generates TypeBox schemas for TSDIAPI framework
+1. **Prisma Fastify TypeBox Generator** (this package) - Generates TypeBox schemas for TSDIAPI framework
 2. **Prisma Class DTO Generator** - Generates DTO classes for Routing Controllers framework
 
 Both generators share the same configuration format and UI constructor, but produce different output formats optimized for their respective frameworks.
@@ -16,27 +16,27 @@ Both generators share the same configuration format and UI constructor, but prod
 
 ## 🔹 How It Works
 
-You can use `prisma-typebox-generator` in two ways:
+You can use `prisma-fastify-typebox-generator` in two ways:
 1. **CLI Mode** – Run from the command line
 2. **Programmatic Mode** – Import and execute within your Node.js application
 
 ### 🚀 CLI Usage
 
 ```sh
-npx prisma-typebox-generator --path=./prisma/schema.prisma --output=./typebox-schemas
+npx prisma-fastify-typebox-generator --path=./prisma/schema.prisma --output=./typebox-schemas
 ```
 
 or install globally:
 
 ```sh
-npm install -g prisma-typebox-generator
-prisma-typebox-generator --path=./prisma/schema.prisma --output=./typebox-schemas
+npm install -g prisma-fastify-typebox-generator
+prisma-fastify-typebox-generator --path=./prisma/schema.prisma --output=./typebox-schemas
 ```
 
 ### 🎛 Available CLI Options
 
 ```sh
-Usage: prisma-typebox-generator --path=[path_to_schema]
+Usage: prisma-fastify-typebox-generator --path=[path_to_schema]
 
 Options:
   --help, -h            Show this help message
@@ -56,7 +56,7 @@ Options:
 You can also use it inside a Node.js project:
 
 ```ts
-import { generate } from "prisma-typebox-generator";
+import { generate } from "prisma-fastify-typebox-generator";
 
 await generate({
   cwd: process.cwd(),
@@ -78,13 +78,13 @@ await generate({
 ## 🛠 Installation
 
 ```sh
-npm install prisma-typebox-generator
+npm install prisma-fastify-typebox-generator
 ```
 
 or
 
 ```sh
-yarn add prisma-typebox-generator
+yarn add prisma-fastify-typebox-generator
 ```
 
 ## 🔧 Configuration
@@ -111,7 +111,7 @@ To integrate with Prisma, add a generator entry in `schema.prisma`:
 
 ```prisma
 generator typebox {
-  provider   = "node node_modules/prisma-typebox-generator"
+  provider   = "node node_modules/prisma-fastify-typebox-generator"
   output     = "../src/typebox-schemas"
   configPath = "./"
 }
@@ -120,8 +120,8 @@ generator typebox {
 ## 🔗 Links & Resources
 
 - **Website:** [Prisma Schema Generator](https://prisma-dto-generator.netlify.app/)
-- **GitHub Repository:** [unbywyd/prisma-typebox-generator](https://github.com/unbywyd/prisma-typebox-generator)
-- **NPM Package:** [prisma-typebox-generator](https://www.npmjs.com/package/prisma-typebox-generator)
+- **GitHub Repository:** [unbywyd/prisma-fastify-typebox-generator](https://github.com/unbywyd/prisma-fastify-typebox-generator)
+- **NPM Package:** [prisma-fastify-typebox-generator](https://www.npmjs.com/package/prisma-fastify-typebox-generator)
 - **Related Package:** [prisma-class-dto-generator](https://www.npmjs.com/package/prisma-class-dto-generator)
 
 ## 📌 Author
