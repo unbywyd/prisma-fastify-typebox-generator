@@ -2,7 +2,7 @@ import { Project } from "ts-morph";
 import type { DMMF as PrismaDMMF } from '@prisma/generator-helper';
 import path from 'path';
 import { generateEnumImports, getFieldDirectives, getTSDataTypeFromFieldType } from "./helpers.js";
-import { PrismaClassDTOGeneratorField } from "./generate-class.js";
+import { PrismaClassDTOGeneratorField } from "./generate-schema.js";
 import { PrismaClassDTOGeneratorConfig, PrismaClassDTOGeneratorListModelConfig } from "./prisma-generator.js";
 
 function getTypeBoxType(field: PrismaDMMF.Field | PrismaClassDTOGeneratorField): string {

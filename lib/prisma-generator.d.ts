@@ -1,4 +1,4 @@
-import { PrismaClassDTOGeneratorField } from './generate-class.js';
+import { PrismaClassDTOGeneratorField } from './generate-schema.js';
 export type PrismaClassDTOGeneratorModelConfig = {
     excludeFields?: string[];
     excludeModels?: string[];

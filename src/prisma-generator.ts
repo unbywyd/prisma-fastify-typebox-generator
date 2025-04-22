@@ -2,7 +2,7 @@ import pkg from '@prisma/internals';
 const { getDMMF } = pkg;
 import { promises as fs } from 'fs';
 import path from 'path';
-import generateClass, { PrismaClassDTOGeneratorField } from './generate-class.js';
+import generateSchema, { PrismaClassDTOGeneratorField } from './generate-schema.js';
 import generateEnum from './generate-enum.js';
 import { generateEnumsIndexFile, generateModelsIndexFile, generatePreloadEntitiesFile } from './helpers.js';
 import { project } from './project.js';
@@ -322,7 +322,7 @@ export async function generate(options: GeneratorOptions) {
 
   const prepareModels = models.filter((model) => !excludeModels.includes(model.name));
   for (const model of prepareModels) {
-    const _listPrepared = await generateClass(config, project, outputDir, model, config, foreignKeyMap, referenceModels);
+    const _listPrepared = await generateSchema(config, project, outputDir, model, config, foreignKeyMap, referenceModels);
     if (_listPrepared?.length) {
       _listPrepared.forEach((name) => listPrepared.add(name));
     }

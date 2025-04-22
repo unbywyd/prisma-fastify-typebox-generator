@@ -51,18 +51,28 @@ export const generateModelsIndexFile = (
   const standardExports = modelNames.flatMap<OptionalKind<ExportDeclarationStructure>>(
     (modelName) => {
       const exports: OptionalKind<ExportDeclarationStructure>[] = [];
+      const model = prismaClientDmmf.datamodel.models.find(m => m.name === modelName);
+      const hasRelations = model?.fields.some(field => field.relationName) || false;
 
       if (!excludeInputModels.includes(modelName)) {
+        const inputExports = [`Input${modelName}Schema`];
+        if (hasRelations && config.input?.includeRelations !== false) {
+          inputExports.push(`Input${modelName}SchemaLite`);
+        }
         exports.push({
           moduleSpecifier: `./Input${modelName}Schema.model.js`,
-          namedExports: [`Input${modelName}Schema`],
+          namedExports: inputExports,
         });
       }
 
       if (!excludeOutputModels.includes(modelName)) {
+        const outputExports = [`Output${modelName}Schema`];
+        if (hasRelations && config.output?.includeRelations !== false) {
+          outputExports.push(`Output${modelName}SchemaLite`);
+        }
         exports.push({
           moduleSpecifier: `./Output${modelName}Schema.model.js`,
-          namedExports: [`Output${modelName}Schema`],
+          namedExports: outputExports,
         });
       }
 
@@ -340,7 +350,7 @@ export function generatePreloadEntitiesFile(
   generatedListSchemas: { file: string; exports: string[] }[]
 ) {
   const preloadEntitiesSourceFile = project.createSourceFile(
-    path.resolve(outputDir, 'preload-entities.module.ts'),
+    path.resolve(outputDir, 'preload-entities.extra.ts'),
     undefined,
     { overwrite: true },
   );
@@ -368,11 +378,20 @@ export function generatePreloadEntitiesFile(
   const importStatements = [
     ...modelNames.flatMap((modelName) => {
       const imports = [];
+      const model = prismaClientDmmf.datamodel.models.find(m => m.name === modelName);
+      const hasRelations = model?.fields.some(field => field.relationName) || false;
+
       if (!excludeInputModels.includes(modelName)) {
         imports.push(`Input${modelName}Schema`);
+        if (hasRelations && config.input?.includeRelations !== false) {
+          imports.push(`Input${modelName}SchemaLite`);
+        }
       }
       if (!excludeOutputModels.includes(modelName)) {
         imports.push(`Output${modelName}Schema`);
+        if (hasRelations && config.output?.includeRelations !== false) {
+          imports.push(`Output${modelName}SchemaLite`);
+        }
       }
       return imports;
     }),
@@ -389,11 +408,20 @@ export function generatePreloadEntitiesFile(
   const schemaEntries = [
     ...modelNames.flatMap((modelName) => {
       const entries = [];
+      const model = prismaClientDmmf.datamodel.models.find(m => m.name === modelName);
+      const hasRelations = model?.fields.some(field => field.relationName) || false;
+
       if (!excludeInputModels.includes(modelName)) {
         entries.push(`    { name: 'Input${modelName}Schema', schema: Input${modelName}Schema },`);
+        if (hasRelations && config.input?.includeRelations !== false) {
+          entries.push(`    { name: 'Input${modelName}SchemaLite', schema: Input${modelName}SchemaLite },`);
+        }
       }
       if (!excludeOutputModels.includes(modelName)) {
         entries.push(`    { name: 'Output${modelName}Schema', schema: Output${modelName}Schema },`);
+        if (hasRelations && config.output?.includeRelations !== false) {
+          entries.push(`    { name: 'Output${modelName}SchemaLite', schema: Output${modelName}SchemaLite },`);
+        }
       }
       return entries;
     }),
@@ -421,7 +449,7 @@ export function generatePreloadEntitiesFile(
     `  ];`,
     ``,
     `  for (const { schema } of allSchemas) {`,
-    `    if (!fastify.getSchema(schema.$id)) {`,
+    `    if (!fastify.getSchema(schema.$id!)) {`,
     `      fastify.addSchema(schema);`,
     `    }`,
     `  }`,

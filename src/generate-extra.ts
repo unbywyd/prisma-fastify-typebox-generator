@@ -3,7 +3,7 @@ import type { DMMF as PrismaDMMF } from '@prisma/generator-helper';
 import path from "path";
 import { PrismaClassDTOGeneratorConfig } from "./prisma-generator.js";
 import { getTSDataTypeFromFieldType, shouldImportHelpers, generateEnumImports } from "./helpers.js";
-import { PrismaClassDTOGeneratorField } from "./generate-class.js";
+import { PrismaClassDTOGeneratorField } from "./generate-schema.js";
 
 type ExtraField = Partial<PrismaDMMF.Field> & {
     name: string;
@@ -157,7 +157,7 @@ export function generateExtraModel(
             if (isArray) {
                 type = `Type.Array(${type})`;
             }
-            if (!field.isRequired) {
+            if (!field.isRequired && !type.includes('Type.Optional')) {
                 type = `Type.Optional(${type})`;
             }
         } else if (field.kind === 'enum') {

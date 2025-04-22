@@ -41,7 +41,7 @@ function getTypeBoxType(field: PrismaDMMF.Field, mainConfig: PrismaClassDTOGener
       type = 'Type.Number()';
       break;
     case 'Json':
-      type = 'Type.Any()';
+      type = 'Type.Any({default: null})';
       break;
     case 'Bytes':
       type = 'Type.String()';
@@ -217,22 +217,47 @@ function generateSchema(
     }
   });
 
-  // Generate TypeBox schema
+  // Generate lite schema with Type.Any() for relations
+  const liteSchemaProperties = fields.map(field => {
+    let type;
+    if (field.relationName) {
+      type = field.isList ? 'Type.Array(Type.Any({default: null}))' : 'Type.Any({default: null})';
+    } else {
+      type = getTypeBoxType(field, mainConfig);
+    }
+    if (!type.includes('Type.Optional')) {
+      type = `Type.Optional(${type})`;
+    }
+    return `  ${field.name}: ${type},`;
+  });
+
+  // Check if we need to generate lite version
+  const hasRelations = fields.some(field => field.relationName);
+  const shouldGenerateLite = hasRelations && config.includeRelations !== false;
+
+  if (shouldGenerateLite) {
+    sourceFile.addStatements([
+      `export const ${outputModelName}Lite = Type.Object({`,
+      ...liteSchemaProperties,
+      `}, {`,
+      `  $id: '${outputModelName}Lite',`,
+      `});`,
+      ``,
+      `export type ${outputModelName}LiteType = Static<typeof ${outputModelName}Lite>;`,
+    ]);
+  }
+
+  // Generate main schema with relations
   const schemaProperties = fields.map(field => {
     let type = getTypeBoxType(field, mainConfig);
 
     if (field.relationName) {
       const isArray = field.isList;
-      const isCyclic = model.name === field.type;
-      const schemaSuffix = isCyclic ? 'ChildSchema' : 'Schema';
+      const schemaSuffix = 'SchemaLite';
       const extraName = `${field.type}${schemaSuffix}`;
       const relatedSchemaName = (field as PrismaClassDTOGeneratorField).isExtra ? extraName : `${schemaType}${field.type}${schemaSuffix}`;
 
-      if (isCyclic) {
-        type = `Type.Ref('${relatedSchemaName}')`;
-      } else {
-        type = `Type.Ref('${relatedSchemaName}')`;
-      }
+      type = `Type.Ref('${relatedSchemaName}')`;
 
       if (isArray) {
         type = `Type.Array(${type})`;
