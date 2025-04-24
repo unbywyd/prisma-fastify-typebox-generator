@@ -13,7 +13,10 @@ export function generateListSchema(
     model: Partial<PrismaDMMF.Model>,
     mainConfig: PrismaClassDTOGeneratorConfig,
     enums: Record<string, string[]>
-): { file: string; exports: string[] }[] {
+): { 
+    file: string; 
+    types: string[];
+    exports: string[] }[] {
     const modelName = model.name;
     const itemsModelName = config?.outputModelName ? config?.outputModelName : `Output${modelName}`;
 
@@ -121,6 +124,10 @@ export function generateListSchema(
         exports: [
             `QueryList${modelName}Schema`,
             `OutputList${modelName}Schema`
+        ],
+        types: [
+            `QueryList${modelName}SchemaType`,
+            `OutputList${modelName}SchemaType`
         ]
     }];
 }

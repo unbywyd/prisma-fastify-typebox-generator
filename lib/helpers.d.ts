@@ -4,6 +4,7 @@ import { PrismaClassDTOGeneratorConfig } from './prisma-generator.js';
 export declare const generateModelsIndexFile: (prismaClientDmmf: PrismaDMMF.Document, project: Project, outputDir: string, config: PrismaClassDTOGeneratorConfig, generatedListSchemas?: {
     file: string;
     exports: string[];
+    types: string[];
 }[]) => void;
 export declare const getTSDataTypeFromFieldType: (field: PrismaDMMF.Field, config: PrismaClassDTOGeneratorConfig) => string;
 export declare function getTypeBoxType(field: PrismaDMMF.Field, schemaType?: 'Input' | 'Output'): string;

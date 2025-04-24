@@ -31,7 +31,7 @@ export const generateModelsIndexFile = (
   project: Project,
   outputDir: string,
   config: PrismaClassDTOGeneratorConfig,
-  generatedListSchemas: { file: string; exports: string[] }[] = [],
+  generatedListSchemas: { file: string; exports: string[]; types: string[] }[] = [],
 ) => {
   const modelsBarrelExportSourceFile = project.createSourceFile(
     path.resolve(outputDir, 'models', 'index.ts'),
@@ -85,7 +85,7 @@ export const generateModelsIndexFile = (
   const listSchemaExports = generatedListSchemas.flatMap<OptionalKind<ExportDeclarationStructure>>(
     (schemaInfo) => ({
       moduleSpecifier: `./${schemaInfo.file.replace('.ts', '.js')}`,
-      namedExports: schemaInfo.exports,
+      namedExports: [...schemaInfo.exports, ...schemaInfo.types],
     })
   );
 

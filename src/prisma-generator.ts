@@ -172,7 +172,11 @@ async function parseConfig(absolutePath: string): Promise<PrismaClassDTOGenerato
     }
     if (config.lists === undefined) {
       config.lists = true;
-      config.useBaseListFields = ["search", "createdAt", "updatedAt"];
+      config.useBaseListFields = [
+        "search",
+        "dateAtLte",
+        "dateAtGte"
+      ];
     }
 
     return config as PrismaClassDTOGeneratorConfig;
@@ -335,7 +339,7 @@ export async function generate(options: GeneratorOptions) {
 
   const dirPath = path.resolve(outputDir, 'models');
   let list = config.lists ? (config.lists as Record<string, PrismaClassDTOGeneratorListModelConfig>) : {};
-  const generatedListSchemas: { file: string; exports: string[] }[] = [];
+  const generatedListSchemas: { file: string; exports: string[]; types: string[] }[] = [];
   if (list && !Object.keys(list).length) {
     const newList: Record<string, PrismaClassDTOGeneratorListModelConfig> = {};
     for (const model of prepareModels) {
