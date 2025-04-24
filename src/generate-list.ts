@@ -1,52 +1,10 @@
 import { Project } from "ts-morph";
 import type { DMMF as PrismaDMMF } from '@prisma/generator-helper';
 import path from 'path';
-import { generateEnumImports, getFieldDirectives, getTSDataTypeFromFieldType } from "./helpers.js";
+import { generateEnumImports, getFieldDirectives, getTSDataTypeFromFieldType, getTypeBoxType } from "./helpers.js";
 import { PrismaClassDTOGeneratorField } from "./generate-schema.js";
 import { PrismaClassDTOGeneratorConfig, PrismaClassDTOGeneratorListModelConfig } from "./prisma-generator.js";
 
-function getTypeBoxType(field: PrismaDMMF.Field | PrismaClassDTOGeneratorField): string {
-    let type = field.type;
-    let isOptional = true; // List fields are always optional
-
-    switch (field.type) {
-        case 'Int':
-        case 'Float':
-            type = 'Type.Number()';
-            break;
-        case 'DateTime':
-            type = 'DateString()';
-            break;
-        case 'String':
-            type = 'Type.String()';
-            break;
-        case 'Boolean':
-            type = 'Type.Boolean()';
-            break;
-        case 'Decimal':
-            type = 'Type.Number()';
-            break;
-        case 'Json':
-            type = 'Type.Any()';
-            break;
-        case 'Bytes':
-            type = 'Type.String()';
-            break;
-        case 'File':
-            type = 'Type.String({ format: "binary" })';
-            break;
-    }
-
-    if (field.isList) {
-        type = `Type.Array(${type})`;
-    }
-
-    if (isOptional) {
-        type = `Type.Optional(${type})`;
-    }
-
-    return type;
-}
 
 export function generateListSchema(
     config: PrismaClassDTOGeneratorListModelConfig,
@@ -54,6 +12,7 @@ export function generateListSchema(
     dirPath: string,
     model: Partial<PrismaDMMF.Model>,
     mainConfig: PrismaClassDTOGeneratorConfig,
+    enums: Record<string, string[]>
 ): { file: string; exports: string[] }[] {
     const modelName = model.name;
     const itemsModelName = config?.outputModelName ? config?.outputModelName : `Output${modelName}`;
@@ -77,13 +36,19 @@ export function generateListSchema(
         });
     }
 
+
     const directives = getFieldDirectives(model?.documentation);
-    const isOrderable = (config?.orderable === true || Array.isArray(config?.orderable) && config?.orderable?.length) || directives.orderable;
+    const isOrderable = (config?.orderable === true || (Array.isArray(config?.orderable) && !!config?.orderable?.length)) || directives.orderable;
     const hasPagination = config?.pagination || directives.pagination;
 
-    const orderableFields = Array.isArray(config?.orderable) ? config?.orderable : [];
-
-    const filters = config?.filters || [];
+    let orderableFields = Array.isArray(config?.orderable) ? config?.orderable : [];
+    if (config?.orderable === true) {
+        orderableFields = model.fields?.filter((field) => !field.relationName && !field.isList)?.map((field) => field.name) || [];
+    }
+    let filters = config?.filters || [];
+    if (filters === true) {
+        filters = model.fields?.filter((field) => !field.relationName && !field.isList)?.map((field) => field.name) || [];
+    }
     const validFields = model.fields?.filter((field) => {
         const directives = getFieldDirectives(field.documentation);
         return directives.filterable || filters.find((filter) => typeof filter === 'string' ? filter === field.name : filter.name === field.name);
@@ -96,7 +61,10 @@ export function generateListSchema(
             `  skip: Type.Optional(Type.Number()),`,
         ] : []),
         ...validFields.map(field => {
-            const type = getTypeBoxType(field);
+            const type = getTypeBoxType({
+                ...field,
+                isRequired: false
+            }, 'Output');
             return `  ${field.name}: ${type},`;
         }),
     ];
@@ -105,9 +73,10 @@ export function generateListSchema(
     const customFields = filters.filter((filter) => typeof filter !== 'string' && !modelFieldsKeys.includes(filter.name)) as Array<PrismaClassDTOGeneratorField>;
 
     generateEnumImports(sourceFile, customFields, mainConfig);
+    generateEnumImports(sourceFile, validFields, mainConfig);
 
     customFields.forEach((field) => {
-        const type = getTypeBoxType(field);
+        const type = getTypeBoxType(field, 'Output');
         queryListProperties.push(`  ${field.name}: ${type},`);
     });
 
@@ -147,7 +116,6 @@ export function generateListSchema(
         ``,
         `export type OutputList${modelName}SchemaType = Static<typeof OutputList${modelName}Schema>;`,
     ]);
-
     return [{
         file: `List${modelName}Schema.model.ts`,
         exports: [

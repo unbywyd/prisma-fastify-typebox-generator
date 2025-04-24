@@ -9,4 +9,4 @@ export type PrismaClassDTOGeneratorField = PrismaDMMF.Field & {
 export default function generateClass(config: PrismaClassDTOGeneratorConfig, project: Project, outputDir: string, model: PrismaDMMF.Model, mainConfig: PrismaClassDTOGeneratorConfig, foreignKeyMap: Map<string, string>, refs: Array<{
     type: 'input' | 'output';
     name: string;
-}>): Promise<string[]>;
+}>, enums: Record<string, string[]>): Promise<string[]>;

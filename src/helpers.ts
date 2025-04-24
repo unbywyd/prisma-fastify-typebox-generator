@@ -8,6 +8,7 @@ import {
   SourceFile,
 } from 'ts-morph';
 import { PrismaClassDTOGeneratorConfig } from './prisma-generator.js';
+import { PrismaClassDTOGeneratorField } from './generate-schema.js';
 
 function generateUniqueImports(sourceFile: SourceFile, imports: string[], moduleSpecifier: string) {
   let existingImport = sourceFile.getImportDeclaration(moduleSpecifier);
@@ -104,14 +105,6 @@ export const generateModelsIndexFile = (
   ]);
 };
 
-export const shouldImportPrisma = (fields: PrismaDMMF.Field[]) => {
-  return fields.some((field) => ['Decimal', 'Json'].includes(field.type));
-};
-
-export const shouldImportHelpers = (fields: PrismaDMMF.Field[]) => {
-  return fields.some((field) => ['enum'].includes(field.kind));
-};
-
 export const getTSDataTypeFromFieldType = (field: PrismaDMMF.Field, config: PrismaClassDTOGeneratorConfig) => {
   let type = field.type;
   switch (field.type) {
@@ -147,131 +140,56 @@ export const getTSDataTypeFromFieldType = (field: PrismaDMMF.Field, config: Pris
   return type;
 };
 
-export const getDecoratorsByFieldType = (field: PrismaDMMF.Field, config: PrismaClassDTOGeneratorConfig) => {
-  const decorators: OptionalKind<DecoratorStructure>[] = [];
-
-  switch (field.type) {
-    case 'Int':
-      decorators.push({ name: 'IsInt', arguments: [] });
-      break;
-    case 'Float':
-      decorators.push({ name: 'IsNumber', arguments: [] });
-      break;
-    case 'Decimal':
-      decorators.push({ name: 'IsDecimal', arguments: [] });
-      break;
-    case 'DateTime':
-      decorators.push({ name: 'IsDate', arguments: [] });
-      break;
-    case 'String':
-      decorators.push({
-        name: 'IsString',
-        arguments: field.isList ? ['{ each: true }'] : [], // Преобразуем объект в строку
-      });
-
-      break;
-    case 'Boolean':
-      decorators.push({ name: 'IsBoolean', arguments: [] });
-      break;
+export function getTypeBoxType(field: PrismaDMMF.Field, schemaType?: 'Input' | 'Output'): string {
+  let type = field.type;
+  let isOptional = !field.isRequired;
+  if (field.kind !== 'enum') {
+    switch (field.type) {
+      case 'Int':
+      case 'Float':
+        type = 'Type.Number()';
+        break;
+      case 'DateTime':
+        type = 'DateString()';
+        break;
+      case 'String':
+        type = 'Type.String()';
+        break;
+      case 'Boolean':
+        type = 'Type.Boolean()';
+        break;
+      case 'Decimal':
+        type = 'Type.Number()';
+        break;
+      case 'Json':
+        type = 'Type.Any({default: null})';
+        break;
+      case 'Bytes':
+        type = 'Type.String()';
+        break;
+      case 'File':
+        type = 'Type.String({ format: "binary" })';
+        break;
+    }
   }
 
-  // Добавляем валидатор для обязательного или опционального поля
-  if (field.isRequired) {
-    decorators.unshift({ name: 'IsDefined', arguments: [] });
-  } else {
-    decorators.unshift({ name: 'IsOptional', arguments: [] });
+  if (field.relationName) {
+    const schemaSuffix = 'SchemaLite';
+    const extraName = `${field.type}${schemaSuffix}`;
+    const relatedSchemaName = (field as PrismaClassDTOGeneratorField).isExtra ? extraName : `${schemaType ? schemaType : ''}${field.type}${schemaSuffix}`;
+    type = `Type.Ref('${relatedSchemaName}')`;
   }
 
-  switch (field.type) {
-    case 'Int':
-    case 'Float':
-      decorators.push({ name: 'Type', arguments: ['() => Number'] });
-      break;
-    case 'DateTime':
-      decorators.push({ name: 'Type', arguments: ['() => Date'] });
-      break;
-    case 'String':
-      decorators.push({ name: 'Type', arguments: ['() => String'] });
-      break;
-    case 'Boolean':
-      decorators.push({ name: 'Type', arguments: ['() => Boolean'] });
-      break;
+  if (field.isList) {
+    type = `Type.Array(${type})`;
   }
 
-  if (field.kind === 'enum') {
-    decorators.push({ name: 'IsIn', arguments: [`getEnumValues(${field.type})`] });
+  if (isOptional) {
+    type = `Type.Optional(${type})`;
   }
 
-  decorators.push({ name: 'Expose', arguments: [] });
-
-  return decorators;
-};
-
-
-export const getDecoratorsImportsByType = (field: PrismaDMMF.Field) => {
-  const validatorImports = new Set();
-  switch (field.type) {
-    case 'Int':
-      validatorImports.add('IsInt');
-      break;
-    case 'DateTime':
-      validatorImports.add('IsDate');
-      break;
-    case 'String':
-      validatorImports.add('IsString');
-      break;
-    case 'Boolean':
-      validatorImports.add('IsBoolean');
-      break;
-    case 'Decimal':
-      validatorImports.add('IsDecimal');
-      break;
-    case 'Float':
-      validatorImports.add('IsNumber');
-      break;
-  }
-  if (field.isRequired) {
-    validatorImports.add('IsDefined');
-  } else {
-    validatorImports.add('IsOptional');
-  }
-  if (field.kind === 'enum') {
-    validatorImports.add('IsIn');
-  }
-  return [...validatorImports];
-};
-
-export const generateClassValidatorImport = (
-  sourceFile: SourceFile,
-  validatorImports: Array<string>,
-) => {
-  generateUniqueImports(sourceFile, validatorImports, 'class-validator');
-};
-
-export const generatePrismaImport = (sourceFile: SourceFile) => {
-  sourceFile.addImportDeclaration({
-    moduleSpecifier: '@prisma/client',
-    namedImports: ['Prisma'],
-  });
-};
-
-export const generateRelationImportsImport = (
-  sourceFile: SourceFile,
-  relationImports: Array<string>,
-) => {
-  generateUniqueImports(sourceFile, relationImports.map(name => `${name}Schema`), './');
-};
-
-export const generateHelpersImports = (
-  sourceFile: SourceFile,
-  helpersImports: Array<string>,
-) => {
-  sourceFile.addImportDeclaration({
-    moduleSpecifier: 'prisma-class-dto-generator',
-    namedImports: helpersImports,
-  });
-};
-
+  return type;
+}
 export const generateEnumImports = (
   sourceFile: SourceFile,
   fields: PrismaDMMF.Field[],
@@ -296,14 +214,6 @@ export function generateEnumsIndexFile(
     })),
   );
 }
-
-export const generateClassTransformerImport = (
-  sourceFile: SourceFile,
-  transformerImports: Array<string>,
-) => {
-  generateUniqueImports(sourceFile, transformerImports, 'class-transformer');
-};
-
 
 export type FieldDirectives = {
   filterable: boolean;
@@ -425,11 +335,11 @@ export function generatePreloadEntitiesFile(
       }
       return entries;
     }),
-    ...extraModelNames.map((extraModelName) => 
+    ...extraModelNames.map((extraModelName) =>
       `    { name: '${extraModelName}Schema', schema: ${extraModelName}Schema },`
     ),
-    ...generatedListSchemas.flatMap(schemaInfo => 
-      schemaInfo.exports.map(exportName => 
+    ...generatedListSchemas.flatMap(schemaInfo =>
+      schemaInfo.exports.map(exportName =>
         `    { name: '${exportName}', schema: ${exportName} },`
       )
     ),

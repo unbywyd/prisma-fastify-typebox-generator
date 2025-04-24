@@ -35,7 +35,7 @@ export type PrismaClassDTOGeneratorModelConfig = {
 export type PrismaClassDTOGeneratorListModelConfig = {
   pagination?: true,
   outputModelName?: string,
-  filters?: Array<string | PrismaClassDTOGeneratorField>,
+  filters?: Array<string | PrismaClassDTOGeneratorField> | true,
   orderable?: boolean | Array<string>,
 };
 export type PrismaClassDTOGeneratorConfig = {
@@ -43,9 +43,10 @@ export type PrismaClassDTOGeneratorConfig = {
   output: PrismaClassDTOGeneratorModelConfig;
   excludeModels?: string[];
   strictMode?: boolean;
+  useBaseListFields?: Array<string>,
   lists?: {
     [modelName: string]: PrismaClassDTOGeneratorListModelConfig
-  },
+  } | boolean,
   extra?: {
     enums?: {
       [enumName: string]: {
@@ -169,6 +170,10 @@ async function parseConfig(absolutePath: string): Promise<PrismaClassDTOGenerato
     if (config.output?.includeRelations === undefined) {
       config.output.includeRelations = true;
     }
+    if (config.lists === undefined) {
+      config.lists = true;
+      config.useBaseListFields = ["search", "createdAt", "updatedAt"];
+    }
 
     return config as PrismaClassDTOGeneratorConfig;
   }
@@ -223,10 +228,11 @@ export async function generate(options: GeneratorOptions) {
   const prismaClientDmmf = await getDMMF({
     datamodel: prismaLoaded.schema,
   });
-
+  const enums: Record<string, string[]> = {};
   const enumNames = new Set<string>();
   prismaClientDmmf.datamodel.enums.forEach((enumItem) => {
     enumNames.add(enumItem.name);
+    enums[enumItem.name] = enumItem.values?.map((value) => value.name) || [];
     generateEnum(project, outputDir, enumItem);
   });
 
@@ -319,25 +325,49 @@ export async function generate(options: GeneratorOptions) {
     }
   }
 
-
   const prepareModels = models.filter((model) => !excludeModels.includes(model.name));
   for (const model of prepareModels) {
-    const _listPrepared = await generateSchema(config, project, outputDir, model, config, foreignKeyMap, referenceModels);
+    const _listPrepared = await generateSchema(config, project, outputDir, model, config, foreignKeyMap, referenceModels, enums);
     if (_listPrepared?.length) {
       _listPrepared.forEach((name) => listPrepared.add(name));
     }
   }
 
   const dirPath = path.resolve(outputDir, 'models');
-  const list = config.lists || {};
+  let list = config.lists ? (config.lists as Record<string, PrismaClassDTOGeneratorListModelConfig>) : {};
   const generatedListSchemas: { file: string; exports: string[] }[] = [];
-
-  for (const [modelName, listConfig] of Object.entries(list)) {
-    if (listPrepared.has(modelName)) {
-      continue;
+  if (list && !Object.keys(list).length) {
+    const newList: Record<string, PrismaClassDTOGeneratorListModelConfig> = {};
+    for (const model of prepareModels) {
+      const filters = config.useBaseListFields ? config.useBaseListFields?.map((field) => {
+        return {
+          name: field,
+          type: 'String',
+          isList: false,
+          isRequired: false,
+        } as PrismaDMMF.Field
+      }) : true;
+      const orderable = config.useBaseListFields ? config.useBaseListFields : true;
+      newList[model.name] = {
+        pagination: true,
+        filters: filters,
+        orderable: orderable,
+        outputModelName: model.name
+      };
     }
-    const listSchemas = generateListSchema(listConfig, project, dirPath, { name: modelName }, config);
-    generatedListSchemas.push(...listSchemas);
+    list = newList;
+  }
+  if (Object.keys(list).length) {
+    for (const [modelName, listConfig] of Object.entries(list)) {
+      if (listPrepared.has(modelName)) {
+        continue;
+      }
+      const model = models.find((model) => model.name === modelName) || {
+        name: modelName,
+      }
+      const listSchemas = generateListSchema(listConfig, project, dirPath, model, config, enums);
+      generatedListSchemas.push(...listSchemas);
+    }
   }
 
   generateModelsIndexFile(prismaClientDmmf, project, outputDir, config, generatedListSchemas);

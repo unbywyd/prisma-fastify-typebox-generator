@@ -23,7 +23,7 @@ export type PrismaClassDTOGeneratorModelConfig = {
 export type PrismaClassDTOGeneratorListModelConfig = {
     pagination?: true;
     outputModelName?: string;
-    filters?: Array<string | PrismaClassDTOGeneratorField>;
+    filters?: Array<string | PrismaClassDTOGeneratorField> | true;
     orderable?: boolean | Array<string>;
 };
 export type PrismaClassDTOGeneratorConfig = {
@@ -31,9 +31,10 @@ export type PrismaClassDTOGeneratorConfig = {
     output: PrismaClassDTOGeneratorModelConfig;
     excludeModels?: string[];
     strictMode?: boolean;
+    useBaseListFields?: Array<string>;
     lists?: {
         [modelName: string]: PrismaClassDTOGeneratorListModelConfig;
-    };
+    } | boolean;
     extra?: {
         enums?: {
             [enumName: string]: {

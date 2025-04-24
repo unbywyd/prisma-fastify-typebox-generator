@@ -3,12 +3,10 @@ import path from 'path';
 import { Project } from 'ts-morph';
 import {
   generateEnumImports,
-  getTSDataTypeFromFieldType,
-  shouldImportHelpers,
-  shouldImportPrisma,
   getFieldDirectives,
+  getTypeBoxType,
 } from './helpers.js';
-import { PrismaClassDTOGeneratorConfig } from './prisma-generator.js';
+import { PrismaClassDTOGeneratorConfig, PrismaClassDTOGeneratorListModelConfig } from './prisma-generator.js';
 import { generateListSchema } from './generate-list.js';
 import { generateExtraModel } from './generate-extra.js';
 import { generateExtraEnum } from './generate-extra-enums.js';
@@ -19,48 +17,7 @@ export type PrismaClassDTOGeneratorField = PrismaDMMF.Field & {
   options?: Record<string, any>;
 };
 
-function getTypeBoxType(field: PrismaDMMF.Field, mainConfig: PrismaClassDTOGeneratorConfig): string {
-  let type = field.type;
-  let isOptional = !field.isRequired;
 
-  switch (field.type) {
-    case 'Int':
-    case 'Float':
-      type = 'Type.Number()';
-      break;
-    case 'DateTime':
-      type = 'DateString()';
-      break;
-    case 'String':
-      type = 'Type.String()';
-      break;
-    case 'Boolean':
-      type = 'Type.Boolean()';
-      break;
-    case 'Decimal':
-      type = 'Type.Number()';
-      break;
-    case 'Json':
-      type = 'Type.Any({default: null})';
-      break;
-    case 'Bytes':
-      type = 'Type.String()';
-      break;
-    case 'File':
-      type = 'Type.String({ format: "binary" })';
-      break;
-  }
-
-  if (field.isList) {
-    type = `Type.Array(${type})`;
-  }
-
-  if (isOptional) {
-    type = `Type.Optional(${type})`;
-  }
-
-  return type;
-}
 
 function generateSchema(
   config: PrismaClassDTOGeneratorConfig['input'] | PrismaClassDTOGeneratorConfig['output'],
@@ -221,12 +178,12 @@ function generateSchema(
   const liteSchemaProperties = fields.map(field => {
     let type;
     if (field.relationName) {
-      type = field.isList ? 'Type.Array(Type.Any({default: null}))' : 'Type.Any({default: null})';
+      type = field.isList ? 'Type.Optional(Type.Array(Type.Any({default: null})))' : 'Type.Optional(Type.Any({default: null}))';
     } else {
-      type = getTypeBoxType(field, mainConfig);
-    }
-    if (!type.includes('Type.Optional')) {
-      type = `Type.Optional(${type})`;
+      type = getTypeBoxType({
+        ...field,
+        isRequired: false
+      }, schemaType);
     }
     return `  ${field.name}: ${type},`;
   });
@@ -249,26 +206,7 @@ function generateSchema(
 
   // Generate main schema with relations
   const schemaProperties = fields.map(field => {
-    let type = getTypeBoxType(field, mainConfig);
-
-    if (field.relationName) {
-      const isArray = field.isList;
-      const schemaSuffix = 'SchemaLite';
-      const extraName = `${field.type}${schemaSuffix}`;
-      const relatedSchemaName = (field as PrismaClassDTOGeneratorField).isExtra ? extraName : `${schemaType}${field.type}${schemaSuffix}`;
-
-      type = `Type.Ref('${relatedSchemaName}')`;
-
-      if (isArray) {
-        type = `Type.Array(${type})`;
-      }
-      if (!field.isRequired) {
-        type = `Type.Optional(${type})`;
-      }
-    } else if (field.kind === 'enum') {
-      type = field.type;
-    }
-
+    let type = getTypeBoxType(field, schemaType);
     return `  ${field.name}: ${type},`;
   });
 
@@ -290,7 +228,8 @@ export default async function generateClass(
   model: PrismaDMMF.Model,
   mainConfig: PrismaClassDTOGeneratorConfig,
   foreignKeyMap: Map<string, string>,
-  refs: Array<{ type: 'input' | 'output', name: string }>
+  refs: Array<{ type: 'input' | 'output', name: string }>,
+  enums: Record<string, string[]>
 ) {
   const dirPath = path.resolve(outputDir, 'models');
 
@@ -391,13 +330,13 @@ export default async function generateClass(
 
   const listPrepared = [];
 
-  const listModels = (config.lists || {}) as Record<string, { pagination?: true; filters?: Array<string> }>;
-  if (directives.listable) {
+  const listModels = config.lists ? (config.lists as Record<string, PrismaClassDTOGeneratorListModelConfig>) : false;
+  if (directives.listable && listModels) {
     const configList = listModels[model.name] || {
       pagination: true,
       filters: [],
     };
-    generateListSchema(configList, project, dirPath, model, mainConfig);
+    generateListSchema(configList, project, dirPath, model, mainConfig, enums);
     listPrepared.push(model.name);
   }
   return listPrepared;
