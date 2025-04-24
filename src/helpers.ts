@@ -56,7 +56,7 @@ export const generateModelsIndexFile = (
       const hasRelations = model?.fields.some(field => field.relationName) || false;
 
       if (!excludeInputModels.includes(modelName)) {
-        const inputExports = [`Input${modelName}Schema`];
+        const inputExports = [`Input${modelName}Schema`, `Input${modelName}SchemaType`];
         if (hasRelations && config.input?.includeRelations !== false) {
           inputExports.push(`Input${modelName}SchemaLite`);
         }
@@ -67,7 +67,7 @@ export const generateModelsIndexFile = (
       }
 
       if (!excludeOutputModels.includes(modelName)) {
-        const outputExports = [`Output${modelName}Schema`];
+        const outputExports = [`Output${modelName}Schema`, `Output${modelName}SchemaType`];
         if (hasRelations && config.output?.includeRelations !== false) {
           outputExports.push(`Output${modelName}SchemaLite`);
         }
