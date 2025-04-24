@@ -92,6 +92,8 @@ export function generateListSchema(
         queryListProperties.push(`  orderDirection: Type.Optional(Type.String({ enum: ['asc', 'desc'] })),`);
     }
 
+    const hasLiteVersion = model.fields?.some(field => field.relationName) || false;
+    const suffix = hasLiteVersion ? 'Lite' : '';
     // Generate OutputList schema
     const outputListProperties = [
         ...(hasPagination ? [
@@ -99,7 +101,7 @@ export function generateListSchema(
             `  skip: Type.Optional(Type.Number()),`,
         ] : []),
         `  total: Type.Optional(Type.Number()),`,
-        `  items: Type.Array(Type.Ref('${itemsModelName}Schema')),`,
+        `  items: Type.Array(Type.Ref('${itemsModelName}Schema${suffix}')),`,
     ];
 
     sourceFile.addStatements([

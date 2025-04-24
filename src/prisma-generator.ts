@@ -356,7 +356,7 @@ export async function generate(options: GeneratorOptions) {
         pagination: true,
         filters: filters,
         orderable: orderable,
-        outputModelName: model.name
+        outputModelName: `Output${model.name}`
       };
     }
     list = newList;
