@@ -95,6 +95,7 @@ async function parseConfig(absolutePath: string): Promise<PrismaClassDTOGenerato
         excludeModelFields: {},
         includeModelFields: {},
         makeDateFieldsOptional: true,
+        makeFieldsOptional: true,
         excludeFields: [
           "id",
           "createdAt",
