@@ -192,17 +192,17 @@ function generateSchema(
   const hasRelations = fields.some(field => field.relationName);
   const shouldGenerateLite = hasRelations && config.includeRelations !== false;
 
-  if (shouldGenerateLite) {
-    sourceFile.addStatements([
-      `export const ${outputModelName}Lite = Type.Object({`,
-      ...liteSchemaProperties,
-      `}, {`,
-      `  $id: '${outputModelName}Lite',`,
-      `});`,
-      ``,
-      `export type ${outputModelName}LiteType = Static<typeof ${outputModelName}Lite>;`,
-    ]);
-  }
+  //if (shouldGenerateLite) {
+  sourceFile.addStatements([
+    `export const ${outputModelName}Lite = Type.Object({`,
+    ...liteSchemaProperties,
+    `}, {`,
+    `  $id: '${outputModelName}Lite',`,
+    `});`,
+    ``,
+    `export type ${outputModelName}LiteType = Static<typeof ${outputModelName}Lite>;`,
+  ]);
+  // }
 
   // Generate main schema with relations
   const schemaProperties = fields.map(field => {
