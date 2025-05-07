@@ -57,7 +57,7 @@ export const generateModelsIndexFile = (
 
       if (!excludeInputModels.includes(modelName)) {
         const inputExports = [`Input${modelName}Schema`, `Input${modelName}SchemaType`];
-        if (hasRelations && config.input?.includeRelations !== false) {
+        if (config.input?.includeRelations !== false) { // hasRelations && 
           inputExports.push(`Input${modelName}SchemaLite`);
         }
         exports.push({
