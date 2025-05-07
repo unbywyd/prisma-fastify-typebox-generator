@@ -53,7 +53,7 @@ export const generateModelsIndexFile = (
     (modelName) => {
       const exports: OptionalKind<ExportDeclarationStructure>[] = [];
       const model = prismaClientDmmf.datamodel.models.find(m => m.name === modelName);
-      const hasRelations = model?.fields.some(field => field.relationName) || false;
+      //const hasRelations = model?.fields.some(field => field.relationName) || false;
 
       if (!excludeInputModels.includes(modelName)) {
         const inputExports = [`Input${modelName}Schema`, `Input${modelName}SchemaType`];
@@ -68,7 +68,7 @@ export const generateModelsIndexFile = (
 
       if (!excludeOutputModels.includes(modelName)) {
         const outputExports = [`Output${modelName}Schema`, `Output${modelName}SchemaType`];
-        if (hasRelations && config.output?.includeRelations !== false) {
+        if (config.output?.includeRelations !== false) {
           outputExports.push(`Output${modelName}SchemaLite`);
         }
         exports.push({
