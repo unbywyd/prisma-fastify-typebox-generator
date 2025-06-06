@@ -52,28 +52,38 @@ export const generateModelsIndexFile = (
   const standardExports = modelNames.flatMap<OptionalKind<ExportDeclarationStructure>>(
     (modelName) => {
       const exports: OptionalKind<ExportDeclarationStructure>[] = [];
-      const model = prismaClientDmmf.datamodel.models.find(m => m.name === modelName);
-      //const hasRelations = model?.fields.some(field => field.relationName) || false;
 
       if (!excludeInputModels.includes(modelName)) {
-        const inputExports = [`Input${modelName}Schema`, `Input${modelName}SchemaType`];
-        if (config.input?.includeRelations !== false) { // hasRelations && 
+        const inputExports = [`Input${modelName}Schema`];
+        const inputExportsTypeOnly = [`Input${modelName}SchemaType`];
+        if (config.input?.includeRelations !== false) {
           inputExports.push(`Input${modelName}SchemaLite`);
         }
         exports.push({
           moduleSpecifier: `./Input${modelName}Schema.model.js`,
           namedExports: inputExports,
         });
+        exports.push({
+          moduleSpecifier: `./Input${modelName}Schema.model.js`,
+          namedExports: inputExportsTypeOnly,
+          isTypeOnly: true,
+        });
       }
 
       if (!excludeOutputModels.includes(modelName)) {
-        const outputExports = [`Output${modelName}Schema`, `Output${modelName}SchemaType`];
+        const outputExports = [`Output${modelName}Schema`];
+        const outputExportsTypeOnly = [`Output${modelName}SchemaType`];
         if (config.output?.includeRelations !== false) {
           outputExports.push(`Output${modelName}SchemaLite`);
         }
         exports.push({
           moduleSpecifier: `./Output${modelName}Schema.model.js`,
           namedExports: outputExports,
+        });
+        exports.push({
+          moduleSpecifier: `./Output${modelName}Schema.model.js`,
+          namedExports: outputExportsTypeOnly,
+          isTypeOnly: true,
         });
       }
 
@@ -85,7 +95,15 @@ export const generateModelsIndexFile = (
   const listSchemaExports = generatedListSchemas.flatMap<OptionalKind<ExportDeclarationStructure>>(
     (schemaInfo) => ({
       moduleSpecifier: `./${schemaInfo.file.replace('.ts', '.js')}`,
-      namedExports: [...schemaInfo.exports, ...schemaInfo.types],
+      namedExports: [...schemaInfo.exports],
+    })
+  );
+
+  const listSchemaExportsTypeOnly = generatedListSchemas.flatMap<OptionalKind<ExportDeclarationStructure>>(
+    (schemaInfo) => ({
+      moduleSpecifier: `./${schemaInfo.file.replace('.ts', '.js')}`,
+      namedExports: [...schemaInfo.types],
+      isTypeOnly: true,
     })
   );
 
@@ -101,6 +119,7 @@ export const generateModelsIndexFile = (
   modelsBarrelExportSourceFile.addExportDeclarations([
     ...standardExports,
     ...listSchemaExports,
+    ...listSchemaExportsTypeOnly,
     ...extraExports,
   ]);
 };
