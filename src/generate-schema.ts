@@ -6,12 +6,12 @@ import {
   getFieldDirectives,
   getTypeBoxType,
 } from './helpers.js';
-import { PrismaClassDTOGeneratorConfig, PrismaClassDTOGeneratorListModelConfig } from './prisma-generator.js';
+import { PrismaTypeboxSchemaConfig, PrismaTypeboxSchemaListModelConfig } from './prisma-generator.js';
 import { generateListSchema } from './generate-list.js';
 import { generateExtraModel } from './generate-extra.js';
 import { generateExtraEnum } from './generate-extra-enums.js';
 
-export type PrismaClassDTOGeneratorField = PrismaDMMF.Field & {
+export type PrismaField = PrismaDMMF.Field & {
   isExtra?: boolean;
   isList?: boolean;
   options?: Record<string, any>;
@@ -20,12 +20,12 @@ export type PrismaClassDTOGeneratorField = PrismaDMMF.Field & {
 
 
 function generateSchema(
-  config: PrismaClassDTOGeneratorConfig['input'] | PrismaClassDTOGeneratorConfig['output'],
+  config: PrismaTypeboxSchemaConfig['input'] | PrismaTypeboxSchemaConfig['output'],
   project: Project,
   dirPath: string,
   model: PrismaDMMF.Model,
   schemaType: 'Input' | 'Output',
-  mainConfig: PrismaClassDTOGeneratorConfig,
+  mainConfig: PrismaTypeboxSchemaConfig,
   foreignKeyMap: Map<string, string>,
 ) {
   const outputModelName = `${schemaType}${model.name}Schema`;
@@ -163,7 +163,7 @@ function generateSchema(
   const referenceFields = fields.filter((field) => field.relationName);
 
   referenceFields.forEach((field) => {
-    const relatedSchemaName = (field as PrismaClassDTOGeneratorField).isExtra ? `${field.type}Schema` : `${schemaType}${field.type}Schema`;
+    const relatedSchemaName = (field as PrismaField).isExtra ? `${field.type}Schema` : `${schemaType}${field.type}Schema`;
     const relativePath = `./${relatedSchemaName}.model.js`;
 
     if (isFieldExclude(field as PrismaDMMF.Field)) {
@@ -222,11 +222,11 @@ function generateSchema(
 }
 
 export default async function generateClass(
-  config: PrismaClassDTOGeneratorConfig,
+  config: PrismaTypeboxSchemaConfig,
   project: Project,
   outputDir: string,
   model: PrismaDMMF.Model,
-  mainConfig: PrismaClassDTOGeneratorConfig,
+  mainConfig: PrismaTypeboxSchemaConfig,
   foreignKeyMap: Map<string, string>,
   refs: Array<{ type: 'input' | 'output', name: string }>,
   enums: Record<string, string[]>
@@ -330,7 +330,7 @@ export default async function generateClass(
 
   const listPrepared = [];
 
-  const listModels = config.lists ? (config.lists as Record<string, PrismaClassDTOGeneratorListModelConfig>) : false;
+  const listModels = config.lists ? (config.lists as Record<string, PrismaTypeboxSchemaListModelConfig>) : false;
   if (directives.listable && listModels) {
     const configList = listModels[model.name] || {
       pagination: true,

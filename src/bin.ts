@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { generate } from "./prisma-generator.js";
+import { generate, generateConfig } from "./prisma-generator.js";
 
 // Function to parse CLI arguments
 const parseArgs = (args: string[]) => {
@@ -29,6 +29,7 @@ Options:
   --version, -v         Show the installed version
   --path=[path]         Specify a Prisma schema file (default: ./prisma/schema.prisma)
   --output=[path]       Specify the output directory (default: ./typebox-schemas)
+  --configFile=[path]  Only generate the config file
   `);
     process.exit(0);
 }
@@ -41,6 +42,14 @@ if (options.version || options.v) {
 // Loading and rendering Prisma Schema
 (async () => {
     try {
+
+        if (typeof options.configFile === "string" || options.configFile) {
+            console.log("Generating config file...");
+            const configPath = typeof options.configFile === "string" ? options.configFile : ".";
+            await generateConfig(configPath);
+            process.exit(0);
+        }
+
         const filePath = typeof options.path === "string" ? options.path : undefined;
         const outputDir = typeof options.output === "string" ? options.output : "./typebox-schemas";
         generate({

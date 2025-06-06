@@ -1,22 +1,23 @@
 import { Project } from "ts-morph";
 import type { DMMF as PrismaDMMF } from '@prisma/generator-helper';
 import path from 'path';
-import { generateEnumImports, getFieldDirectives, getTSDataTypeFromFieldType, getTypeBoxType } from "./helpers.js";
-import { PrismaClassDTOGeneratorField } from "./generate-schema.js";
-import { PrismaClassDTOGeneratorConfig, PrismaClassDTOGeneratorListModelConfig } from "./prisma-generator.js";
+import { generateEnumImports, getFieldDirectives, getTypeBoxType } from "./helpers.js";
+import { PrismaField } from "./generate-schema.js";
+import { PrismaTypeboxSchemaConfig, PrismaTypeboxSchemaListModelConfig } from "./prisma-generator.js";
 
 
 export function generateListSchema(
-    config: PrismaClassDTOGeneratorListModelConfig,
+    config: PrismaTypeboxSchemaListModelConfig,
     project: Project,
     dirPath: string,
     model: Partial<PrismaDMMF.Model>,
-    mainConfig: PrismaClassDTOGeneratorConfig,
+    mainConfig: PrismaTypeboxSchemaConfig,
     enums: Record<string, string[]>
-): { 
-    file: string; 
+): {
+    file: string;
     types: string[];
-    exports: string[] }[] {
+    exports: string[]
+}[] {
     const modelName = model.name;
     const itemsModelName = config?.outputModelName ? config?.outputModelName : `Output${modelName}`;
 
@@ -73,7 +74,7 @@ export function generateListSchema(
     ];
 
     const modelFieldsKeys = model.fields?.map((field) => field.name) || [];
-    const customFields = filters.filter((filter) => typeof filter !== 'string' && !modelFieldsKeys.includes(filter.name)) as Array<PrismaClassDTOGeneratorField>;
+    const customFields = filters.filter((filter) => typeof filter !== 'string' && !modelFieldsKeys.includes(filter.name)) as Array<PrismaField>;
 
     generateEnumImports(sourceFile, customFields, mainConfig);
     generateEnumImports(sourceFile, validFields, mainConfig);

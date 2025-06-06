@@ -1,5 +1,5 @@
-import { PrismaClassDTOGeneratorField } from './generate-schema.js';
-export type PrismaClassDTOGeneratorModelConfig = {
+import { PrismaField } from './generate-schema.js';
+export type PrismaTypeboxSchemaModelConfig = {
     excludeFields?: string[];
     excludeModels?: string[];
     excludeIdFields?: boolean;
@@ -11,29 +11,29 @@ export type PrismaClassDTOGeneratorModelConfig = {
     };
     makeFieldsOptional?: boolean;
     includeModelFields?: {
-        [modelName: string]: Array<string | PrismaClassDTOGeneratorField>;
+        [modelName: string]: Array<string | PrismaField>;
     };
     includeRelations?: boolean;
     extendModels?: {
         [modelName: string]: {
-            fields: Array<PrismaClassDTOGeneratorField>;
+            fields: Array<PrismaField>;
         };
     };
 };
-export type PrismaClassDTOGeneratorListModelConfig = {
+export type PrismaTypeboxSchemaListModelConfig = {
     pagination?: true;
     outputModelName?: string;
-    filters?: Array<string | PrismaClassDTOGeneratorField> | true;
+    filters?: Array<string | PrismaField> | true;
     orderable?: boolean | Array<string>;
 };
-export type PrismaClassDTOGeneratorConfig = {
-    input: PrismaClassDTOGeneratorModelConfig;
-    output: PrismaClassDTOGeneratorModelConfig;
+export type PrismaTypeboxSchemaConfig = {
+    input: PrismaTypeboxSchemaModelConfig;
+    output: PrismaTypeboxSchemaModelConfig;
     excludeModels?: string[];
     strictMode?: boolean;
     useBaseListFields?: Array<string>;
     lists?: {
-        [modelName: string]: PrismaClassDTOGeneratorListModelConfig;
+        [modelName: string]: PrismaTypeboxSchemaListModelConfig;
     } | boolean;
     extra?: {
         enums?: {
@@ -44,7 +44,7 @@ export type PrismaClassDTOGeneratorConfig = {
         models: {
             [modelName: string]: {
                 type: "input" | "output";
-                fields: Array<PrismaClassDTOGeneratorField>;
+                fields: Array<PrismaField>;
             };
         };
     };
@@ -54,4 +54,5 @@ export type GeneratorOptions = {
     cwd?: string;
     output?: string;
 };
+export declare function generateConfig(cwd?: string): Promise<void>;
 export declare function generate(options: GeneratorOptions): Promise<void>;

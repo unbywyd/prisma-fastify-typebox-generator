@@ -3,24 +3,27 @@
 [![NPM Version](https://img.shields.io/npm/v/prisma-fastify-typebox-generator.svg?style=for-the-badge)](https://www.npmjs.com/package/prisma-fastify-typebox-generator)
 [![GitHub Stars](https://img.shields.io/github/stars/unbywyd/prisma-fastify-typebox-generator.svg?style=for-the-badge&logo=github)](https://github.com/unbywyd/prisma-fastify-typebox-generator)
 
-## ⚡ Prisma Schema Generator – CLI & Programmatic Usage
+## ⚡ Prisma Schema Generator for TypeBox
 
-This package is part of the Prisma schema generation ecosystem, offering two specialized generators:
+This package generates TypeBox schemas from your Prisma schema, enabling type-safe runtime validation for your Fastify or other TypeScript applications.
 
-1. **Prisma Fastify TypeBox Generator** (this package) - Generates TypeBox schemas for TSDIAPI framework
-2. **Prisma Class DTO Generator** - Generates DTO classes for Routing Controllers framework
+## 🔹 Requirements
 
-Both generators share the same configuration format and UI constructor, but produce different output formats optimized for their respective frameworks.
+- Node.js >= 18.19.0
+- Prisma >= 6.6.0
+- TypeScript >= 5.7.2
 
-**[Prisma Schema Generator UI Constructor](https://prisma-dto-generator.netlify.app/)** is an intuitive UI tool that helps generate configurations for both generators. Define your settings visually, export a `generator-config.json`, and seamlessly integrate schema generation into your workflow.
+## 🚀 Installation
 
-## 🔹 How It Works
+```sh
+npm install prisma-fastify-typebox-generator
+```
+
+## 🔧 Usage
 
 You can use `prisma-fastify-typebox-generator` in two ways:
-1. **CLI Mode** – Run from the command line
-2. **Programmatic Mode** – Import and execute within your Node.js application
 
-### 🚀 CLI Usage
+### CLI Mode
 
 ```sh
 npx prisma-fastify-typebox-generator --path=./prisma/schema.prisma --output=./typebox-schemas
@@ -33,7 +36,7 @@ npm install -g prisma-fastify-typebox-generator
 prisma-fastify-typebox-generator --path=./prisma/schema.prisma --output=./typebox-schemas
 ```
 
-### 🎛 Available CLI Options
+### Available CLI Options
 
 ```sh
 Usage: prisma-fastify-typebox-generator --path=[path_to_schema]
@@ -43,17 +46,10 @@ Options:
   --version, -v         Show the installed version
   --path=[path]         Specify a Prisma schema file (default: ./prisma/schema.prisma)
   --output=[path]       Specify the output directory (default: ./typebox-schemas)
+  --configFile=[path]   Generate an empty configuration file at the specified path
 ```
 
-### 🎯 Why Use It?
-✅ **Type-Safe Schemas** – Generate TypeBox schemas with runtime validation
-✅ **ESM Support** – Fully compatible with modern Node.js environments
-✅ **Fastify Integration** – Perfect for Fastify applications using TypeBox
-✅ **Consistent & Maintainable** – Ensures uniform schema structures
-
-## 📦 Programmatic Usage
-
-You can also use it inside a Node.js project:
+### Programmatic Usage
 
 ```ts
 import { generate } from "prisma-fastify-typebox-generator";
@@ -67,29 +63,24 @@ await generate({
 
 ## 📌 Features
 
+- **Type-Safe Schemas** – Generate TypeBox schemas with runtime validation
+- **ESM Support** – Fully compatible with modern Node.js environments
+- **Fastify Integration** – Perfect for Fastify applications using TypeBox
 - **Automated Schema Generation** – Creates TypeBox schemas for each Prisma model
 - **List Schemas** – Supports pagination, filters, sorting, and flexible array elements
 - **Enum Handling** – Generates enums from the Prisma schema
 - **Selective Generation** – Fine-grained control over which models and fields to include
 - **Custom Directives** – Supports `@filterable`, `@exclude input|output`, `@listable`, and `@orderable` annotations
-- **TypeBox Integration** – Seamless integration with TypeBox for runtime validation
-- **Fastify Support** – Optimized for Fastify applications using TypeBox
-
-## 🛠 Installation
-
-```sh
-npm install prisma-fastify-typebox-generator
-```
-
-or
-
-```sh
-yarn add prisma-fastify-typebox-generator
-```
 
 ## 🔧 Configuration
 
-The tool allows configuring schema generation via a JSON file:
+The tool allows configuring schema generation via a JSON file. You can generate an empty configuration file using the `--configFile` option:
+
+```sh
+npx prisma-fastify-typebox-generator --configFile
+```
+
+Example configuration:
 
 ```json
 {
@@ -105,25 +96,11 @@ The tool allows configuring schema generation via a JSON file:
 }
 ```
 
-## 📄 Example Prisma Schema Configuration
-
-To integrate with Prisma, add a generator entry in `schema.prisma`:
-
-```prisma
-generator typebox {
-  provider   = "node node_modules/prisma-fastify-typebox-generator"
-  output     = "../src/typebox-schemas"
-  configPath = "./"
-}
-```
-
 ## 🔗 Links & Resources
 
-- **Website:** [Prisma Schema Generator](https://prisma-dto-generator.netlify.app/)
 - **GitHub Repository:** [unbywyd/prisma-fastify-typebox-generator](https://github.com/unbywyd/prisma-fastify-typebox-generator)
 - **NPM Package:** [prisma-fastify-typebox-generator](https://www.npmjs.com/package/prisma-fastify-typebox-generator)
-- **Related Package:** [prisma-class-dto-generator](https://www.npmjs.com/package/prisma-class-dto-generator)
 
 ## 📌 Author
 
-Developed by [unbywyd](https://unbywyd.com).
+Developed by [Artyom Gorlovetskiy](https://github.com/unbywyd).

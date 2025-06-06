@@ -1,14 +1,13 @@
 import type { DMMF as PrismaDMMF } from '@prisma/generator-helper';
 import path from 'path';
 import {
-  DecoratorStructure,
   ExportDeclarationStructure,
   OptionalKind,
   Project,
   SourceFile,
 } from 'ts-morph';
-import { PrismaClassDTOGeneratorConfig } from './prisma-generator.js';
-import { PrismaClassDTOGeneratorField } from './generate-schema.js';
+import { PrismaTypeboxSchemaConfig } from './prisma-generator.js';
+import { PrismaField } from './generate-schema.js';
 
 function generateUniqueImports(sourceFile: SourceFile, imports: string[], moduleSpecifier: string) {
   let existingImport = sourceFile.getImportDeclaration(moduleSpecifier);
@@ -30,7 +29,7 @@ export const generateModelsIndexFile = (
   prismaClientDmmf: PrismaDMMF.Document,
   project: Project,
   outputDir: string,
-  config: PrismaClassDTOGeneratorConfig,
+  config: PrismaTypeboxSchemaConfig,
   generatedListSchemas: { file: string; exports: string[]; types: string[] }[] = [],
 ) => {
   const modelsBarrelExportSourceFile = project.createSourceFile(
@@ -124,41 +123,6 @@ export const generateModelsIndexFile = (
   ]);
 };
 
-export const getTSDataTypeFromFieldType = (field: PrismaDMMF.Field, config: PrismaClassDTOGeneratorConfig) => {
-  let type = field.type;
-  switch (field.type) {
-    case 'Int':
-    case 'Float':
-      type = 'number';
-      break;
-    case 'DateTime':
-      type = 'Date';
-      break;
-    case 'String':
-      type = 'string';
-      break;
-    case 'Boolean':
-      type = 'boolean';
-      break;
-    case 'Decimal':
-      type = 'Prisma.Decimal';
-      break;
-    case 'Json':
-      type = 'Prisma.JsonValue';
-      break;
-    case 'Bytes':
-      type = 'Buffer';
-      break;
-  }
-
-  if (field.isList) {
-    type = `${type}[]`;
-  } else if (field.kind === 'object') {
-    type = `${type}`;
-  }
-  return type;
-};
-
 export function getTypeBoxType(field: PrismaDMMF.Field, schemaType?: 'Input' | 'Output'): string {
   let type = field.type;
   let isOptional = !field.isRequired;
@@ -195,7 +159,7 @@ export function getTypeBoxType(field: PrismaDMMF.Field, schemaType?: 'Input' | '
   if (field.relationName) {
     const schemaSuffix = 'SchemaLite';
     const extraName = `${field.type}${schemaSuffix}`;
-    const relatedSchemaName = (field as PrismaClassDTOGeneratorField).isExtra ? extraName : `${schemaType ? schemaType : ''}${field.type}${schemaSuffix}`;
+    const relatedSchemaName = (field as PrismaField).isExtra ? extraName : `${schemaType ? schemaType : ''}${field.type}${schemaSuffix}`;
     type = `Type.Ref('${relatedSchemaName}')`;
   }
 
@@ -212,7 +176,7 @@ export function getTypeBoxType(field: PrismaDMMF.Field, schemaType?: 'Input' | '
 export const generateEnumImports = (
   sourceFile: SourceFile,
   fields: PrismaDMMF.Field[],
-  config: PrismaClassDTOGeneratorConfig,
+  config: PrismaTypeboxSchemaConfig,
 ) => {
   const allEnumsToImport = Array.from(
     new Set(fields.filter((field) => field.kind === 'enum').map((field) => field.type))
@@ -275,7 +239,7 @@ export function generatePreloadEntitiesFile(
   prismaClientDmmf: PrismaDMMF.Document,
   project: Project,
   outputDir: string,
-  config: PrismaClassDTOGeneratorConfig,
+  config: PrismaTypeboxSchemaConfig,
   generatedListSchemas: { file: string; exports: string[] }[]
 ) {
   const preloadEntitiesSourceFile = project.createSourceFile(

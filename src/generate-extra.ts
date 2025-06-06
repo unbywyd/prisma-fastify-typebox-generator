@@ -1,7 +1,7 @@
 import { Project } from "ts-morph";
 import type { DMMF as PrismaDMMF } from '@prisma/generator-helper';
 import path from "path";
-import { PrismaClassDTOGeneratorConfig } from "./prisma-generator.js";
+import { PrismaTypeboxSchemaConfig } from "./prisma-generator.js";
 import { generateEnumImports, getTypeBoxType } from "./helpers.js";
 
 type ExtraField = Partial<PrismaDMMF.Field> & {
@@ -13,7 +13,7 @@ type ExtraField = Partial<PrismaDMMF.Field> & {
 
 
 export function generateExtraModel(
-    config: PrismaClassDTOGeneratorConfig,
+    config: PrismaTypeboxSchemaConfig,
     project: Project,
     outputDir: string,
     modelName: string,
@@ -72,10 +72,8 @@ export function generateExtraModel(
         }));
     }
 
-    // Генерация импортов enum (если есть поля enum)
     generateEnumImports(sourceFile, fields as PrismaDMMF.Field[], config);
 
-    // Generate TypeBox schema
     const schemaProperties = fields.map(field => {
         let type = getTypeBoxType(field as PrismaDMMF.Field);
         return `  ${field.name}: ${type},`;

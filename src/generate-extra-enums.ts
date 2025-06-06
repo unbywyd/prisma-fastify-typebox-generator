@@ -1,16 +1,16 @@
 import { Project } from 'ts-morph';
 import path from 'path';
-import { PrismaClassDTOGeneratorConfig } from './prisma-generator.js';
+import { PrismaTypeboxSchemaConfig } from './prisma-generator.js';
 
 export function generateExtraEnum(
     project: Project,
     outputDir: string,
     enumName: string,
     enumConfig: { values: Array<string> },
-    config: PrismaClassDTOGeneratorConfig,
+    config: PrismaTypeboxSchemaConfig,
 ) {
     const dirPath = path.resolve(outputDir, 'enums');
-    const name = enumName; //config?.extra?.options?.skipExtraPrefix ? enumName : `Extra${enumName}`;
+    const name = enumName;
     const filePath = path.resolve(dirPath, `${name}.enum.ts`);
     const sourceFile = project.createSourceFile(filePath, undefined, {
         overwrite: true,

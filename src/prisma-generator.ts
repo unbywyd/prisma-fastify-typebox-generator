@@ -2,7 +2,7 @@ import pkg from '@prisma/internals';
 const { getDMMF } = pkg;
 import { promises as fs } from 'fs';
 import path from 'path';
-import generateSchema, { PrismaClassDTOGeneratorField } from './generate-schema.js';
+import generateSchema, { PrismaField } from './generate-schema.js';
 import generateEnum from './generate-enum.js';
 import { generateEnumsIndexFile, generateModelsIndexFile, generatePreloadEntitiesFile } from './helpers.js';
 import { project } from './project.js';
@@ -11,7 +11,7 @@ import type { DMMF as PrismaDMMF } from '@prisma/generator-helper';
 import { emptyDir, pathExists } from 'fsesm';
 import { loadPrismaSchema } from './prisma-schema-loader.js';
 
-export type PrismaClassDTOGeneratorModelConfig = {
+export type PrismaTypeboxSchemaModelConfig = {
   excludeFields?: string[];
   excludeModels?: string[];
   excludeIdFields?: boolean;
@@ -23,29 +23,29 @@ export type PrismaClassDTOGeneratorModelConfig = {
   };
   makeFieldsOptional?: boolean;
   includeModelFields?: {
-    [modelName: string]: Array<string | PrismaClassDTOGeneratorField>
+    [modelName: string]: Array<string | PrismaField>
   };
   includeRelations?: boolean;
   extendModels?: {
     [modelName: string]: {
-      fields: Array<PrismaClassDTOGeneratorField>
+      fields: Array<PrismaField>
     }
   }
 };
-export type PrismaClassDTOGeneratorListModelConfig = {
+export type PrismaTypeboxSchemaListModelConfig = {
   pagination?: true,
   outputModelName?: string,
-  filters?: Array<string | PrismaClassDTOGeneratorField> | true,
+  filters?: Array<string | PrismaField> | true,
   orderable?: boolean | Array<string>,
 };
-export type PrismaClassDTOGeneratorConfig = {
-  input: PrismaClassDTOGeneratorModelConfig;
-  output: PrismaClassDTOGeneratorModelConfig;
+export type PrismaTypeboxSchemaConfig = {
+  input: PrismaTypeboxSchemaModelConfig;
+  output: PrismaTypeboxSchemaModelConfig;
   excludeModels?: string[];
   strictMode?: boolean;
   useBaseListFields?: Array<string>,
   lists?: {
-    [modelName: string]: PrismaClassDTOGeneratorListModelConfig
+    [modelName: string]: PrismaTypeboxSchemaListModelConfig
   } | boolean,
   extra?: {
     enums?: {
@@ -56,7 +56,7 @@ export type PrismaClassDTOGeneratorConfig = {
     models: {
       [modelName: string]: {
         type: "input" | "output",
-        fields: Array<PrismaClassDTOGeneratorField>
+        fields: Array<PrismaField>
       }
     }
   }
@@ -67,15 +67,9 @@ function buildForeignKeyMap(dmmf: PrismaDMMF.Document): Map<string, string> {
 
   for (const model of dmmf.datamodel.models) {
     for (const field of model.fields) {
-      // Если поле - это объект (kind === "object") и в нём заданы relationFromFields,
-      // значит, это реляционное поле, указывающее, откуда берётся FK (например, [ 'updatedById' ])
       if (field.kind === 'object' && field.relationFromFields?.length) {
-        const relatedModelName = field.type; // Например, "Admin"
-
-        // relationFromFields может содержать несколько ключей (если составной ключ),
-        // обычно бывает 1, но на всякий случай обходим все
+        const relatedModelName = field.type;
         field.relationFromFields.forEach(fkFieldName => {
-          // Сохраняем в Map, что в модели M поле fkFieldName -> указывает на relatedModelName
           foreignKeyMap.set(`${model.name}.${fkFieldName}`, relatedModelName);
         });
       }
@@ -85,8 +79,8 @@ function buildForeignKeyMap(dmmf: PrismaDMMF.Document): Map<string, string> {
   return foreignKeyMap;
 }
 
-async function parseConfig(absolutePath: string): Promise<PrismaClassDTOGeneratorConfig> {
-  const res = (config: Partial<PrismaClassDTOGeneratorConfig>): PrismaClassDTOGeneratorConfig => {
+async function parseConfig(absolutePath: string): Promise<PrismaTypeboxSchemaConfig> {
+  const res = (config: Partial<PrismaTypeboxSchemaConfig>): PrismaTypeboxSchemaConfig => {
     if (!config.input) {
       config.input = {
         includeRelations: false,
@@ -180,7 +174,7 @@ async function parseConfig(absolutePath: string): Promise<PrismaClassDTOGenerato
       ];
     }
 
-    return config as PrismaClassDTOGeneratorConfig;
+    return config as PrismaTypeboxSchemaConfig;
   }
 
   const defaultValues = {};
@@ -204,6 +198,21 @@ export type GeneratorOptions = {
   output?: string
 }
 
+export async function generateConfig(cwd?: string) {
+  let prismaLoaded = null;
+  try {
+    prismaLoaded = await loadPrismaSchema(cwd || process.cwd());
+  } catch (e) {
+    console.error(e);
+    return;
+  }
+  const prismaPath = prismaLoaded.path;
+  const prismaCWD = path.dirname(prismaPath);
+  const config = await parseConfig('');
+  const configFilePath = path.resolve(prismaCWD, 'generator-config.json');
+  await fs.writeFile(configFilePath, JSON.stringify(config, null, 2));
+  console.log(`✅ Config file generated successfully! ${configFilePath}`);
+}
 export async function generate(options: GeneratorOptions) {
   let prismaLoaded = null;
   try {
@@ -266,7 +275,7 @@ export async function generate(options: GeneratorOptions) {
   const referenceModels: Array<{ type: 'input' | 'output', name: string }> = [];
 
   const models = prismaClientDmmf.datamodel.models;
-  const checkFieldsToReference = (fields: Array<string | PrismaClassDTOGeneratorField>, type: 'input' | 'output') => {
+  const checkFieldsToReference = (fields: Array<string | PrismaField>, type: 'input' | 'output') => {
     for (const field of fields) {
       if (typeof field !== 'string') {
         if (field?.relationName && field.type) {
@@ -339,10 +348,10 @@ export async function generate(options: GeneratorOptions) {
   }
 
   const dirPath = path.resolve(outputDir, 'models');
-  let list = config.lists ? (config.lists as Record<string, PrismaClassDTOGeneratorListModelConfig>) : {};
+  let list = config.lists ? (config.lists as Record<string, PrismaTypeboxSchemaListModelConfig>) : {};
   const generatedListSchemas: { file: string; exports: string[]; types: string[] }[] = [];
   if (list && !Object.keys(list).length) {
-    const newList: Record<string, PrismaClassDTOGeneratorListModelConfig> = {};
+    const newList: Record<string, PrismaTypeboxSchemaListModelConfig> = {};
     for (const model of prepareModels) {
       const filters = config.useBaseListFields ? config.useBaseListFields?.map((field) => {
         return {
