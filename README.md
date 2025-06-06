@@ -3,6 +3,10 @@
 [![NPM Version](https://img.shields.io/npm/v/prisma-fastify-typebox-generator.svg?style=for-the-badge)](https://www.npmjs.com/package/prisma-fastify-typebox-generator)
 [![GitHub Stars](https://img.shields.io/github/stars/unbywyd/prisma-fastify-typebox-generator.svg?style=for-the-badge&logo=github)](https://github.com/unbywyd/prisma-fastify-typebox-generator)
 
+## 🎮 Interactive Playground
+
+Try out the generator and build your configuration interactively at [prisma-typebox-generator.netlify.app](https://prisma-typebox-generator.netlify.app/)
+
 ## ⚡ Prisma Schema Generator for TypeBox
 
 This package generates TypeBox schemas from your Prisma schema, enabling type-safe runtime validation for your Fastify or other TypeScript applications.
