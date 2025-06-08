@@ -76,10 +76,20 @@ export function generateListSchema(
     const modelFieldsKeys = model.fields?.map((field) => field.name) || [];
     const customFields = filters.filter((filter) => typeof filter !== 'string' && !modelFieldsKeys.includes(filter.name)) as Array<PrismaField>;
 
-    generateEnumImports(sourceFile, customFields, mainConfig);
+    const allCustomFields = [...customFields];
+    filters.filter((filter) => typeof filter === 'string' && !modelFieldsKeys.includes(filter)).forEach((filter) => {
+        allCustomFields.push({
+            name: filter,
+            type: 'String',
+            isList: false,
+            isRequired: false,
+          } as PrismaDMMF.Field);
+    });
+
+    generateEnumImports(sourceFile, allCustomFields, mainConfig);
     generateEnumImports(sourceFile, validFields, mainConfig);
 
-    customFields.forEach((field) => {
+    allCustomFields.forEach((field) => {
         const type = getTypeBoxType(field, 'Output');
         queryListProperties.push(`  ${field.name}: ${type},`);
     });
