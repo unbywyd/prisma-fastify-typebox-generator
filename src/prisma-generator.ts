@@ -348,9 +348,9 @@ export async function generate(options: GeneratorOptions) {
   }
 
   const dirPath = path.resolve(outputDir, 'models');
-  let list = config.lists ? (config.lists as Record<string, PrismaTypeboxSchemaListModelConfig>) : {};
   const generatedListSchemas: { file: string; exports: string[]; types: string[] }[] = [];
-  if (list && !Object.keys(list).length) {
+  let list = {} as Record<string, PrismaTypeboxSchemaListModelConfig>;
+  if (config.lists === true) {
     const newList: Record<string, PrismaTypeboxSchemaListModelConfig> = {};
     for (const model of prepareModels) {
       const filters = config.useBaseListFields ? config.useBaseListFields?.map((field) => {
@@ -370,6 +370,8 @@ export async function generate(options: GeneratorOptions) {
       };
     }
     list = newList;
+  } else if (config.lists && Object.keys(config.lists).length) {
+    list = config.lists as Record<string, PrismaTypeboxSchemaListModelConfig>;
   }
   if (Object.keys(list).length) {
     for (const [modelName, listConfig] of Object.entries(list)) {
